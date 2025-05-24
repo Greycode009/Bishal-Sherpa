@@ -41,12 +41,10 @@ async function fetchWithTimeout(url: string, timeoutMs = 5000) {
 
     const data = await response.json();
 
-    // Check for YouTube API specific errors
     if (!response.ok || data.error) {
       const status = response.status;
       const message = data.error?.message || `HTTP error! status: ${status}`;
 
-      // Handle specific error cases
       if (status === 403) {
         console.error(
           `YouTube API error (${status}):`,
@@ -75,12 +73,11 @@ async function fetchWithTimeout(url: string, timeoutMs = 5000) {
       throw error;
     }
 
-    if (error.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       throw new YouTubeAPIError("Request timed out. Please try again.");
     }
 
-    // Handle network errors
-    console.error("Network error:", error);
+    console.error("Network error:", error instanceof Error ? error.message : error);
     throw new YouTubeAPIError(
       "Unable to connect to YouTube. Please check your connection."
     );
@@ -89,9 +86,6 @@ async function fetchWithTimeout(url: string, timeoutMs = 5000) {
   }
 }
 
-/**
- * Fetch latest videos from YouTube channel
- */
 export async function getLatestVideos(
   limit: number = 6
 ): Promise<YouTubeVideo[]> {
@@ -103,7 +97,6 @@ export async function getLatestVideos(
       throw new YouTubeAPIError("YouTube API key or channel ID not set");
     }
 
-    // First get channel info
     const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&key=${apiKey}&${
       channelId.startsWith("UC") ? "id=" : "forUsername="
     }${channelId}`;
@@ -111,7 +104,6 @@ export async function getLatestVideos(
     const channelResponse = await fetchWithTimeout(channelUrl);
 
     if (!channelResponse.items?.length) {
-      // Try searching by handle if direct lookup fails
       const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${channelId}&key=${apiKey}`;
       const searchResponse = await fetchWithTimeout(searchUrl);
 
@@ -119,7 +111,6 @@ export async function getLatestVideos(
         throw new YouTubeAPIError("Channel not found");
       }
 
-      // Use the found channel ID
       const foundChannelId = searchResponse.items[0].id.channelId;
       const foundChannelResponse = await fetchWithTimeout(
         `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${foundChannelId}&key=${apiKey}`
@@ -138,7 +129,6 @@ export async function getLatestVideos(
       throw new YouTubeAPIError("Could not find uploads playlist");
     }
 
-    // Get videos from the uploads playlist
     const playlistResponse = await fetchWithTimeout(
       `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${limit}&playlistId=${uploadsPlaylistId}&key=${apiKey}`
     );
@@ -147,7 +137,6 @@ export async function getLatestVideos(
       return [];
     }
 
-    // Get video IDs and fetch detailed information
     const videoIds = playlistResponse.items
       .map((item: any) => item.snippet.resourceId.videoId)
       .join(",");
@@ -165,14 +154,15 @@ export async function getLatestVideos(
       duration: item.contentDetails.duration,
     }));
   } catch (error) {
-    console.error("Error fetching YouTube videos:", error);
+    if (error instanceof Error) {
+      console.error("Error fetching YouTube videos:", error.message);
+    } else {
+      console.error("Unknown error fetching YouTube videos:", error);
+    }
     throw error;
   }
 }
 
-/**
- * Get channel information and check if it's currently live
- */
 export async function getChannelInfo(): Promise<ChannelInfo> {
   try {
     const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
@@ -191,7 +181,6 @@ export async function getChannelInfo(): Promise<ChannelInfo> {
       };
     }
 
-    // Try direct channel lookup first
     const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&key=${apiKey}&${
       channelId.startsWith("UC") ? "id=" : "forUsername="
     }${channelId}`;
@@ -200,7 +189,6 @@ export async function getChannelInfo(): Promise<ChannelInfo> {
 
     let channel;
     if (!channelResponse.items?.length) {
-      // Try searching by handle if direct lookup fails
       console.log("Channel not found, trying search...");
       const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&q=${channelId}&key=${apiKey}`;
       const searchResponse = await fetchWithTimeout(searchUrl);
@@ -209,7 +197,6 @@ export async function getChannelInfo(): Promise<ChannelInfo> {
         throw new YouTubeAPIError("Channel not found");
       }
 
-      // Use the found channel ID to get full details
       const foundChannelId = searchResponse.items[0].id.channelId;
       const foundChannelResponse = await fetchWithTimeout(
         `https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics,contentDetails&id=${foundChannelId}&key=${apiKey}`
@@ -224,12 +211,11 @@ export async function getChannelInfo(): Promise<ChannelInfo> {
       channel = channelResponse.items[0];
     }
 
-    // Check if the channel is currently live
     const searchResponse = await fetchWithTimeout(
       `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channel.id}&eventType=live&type=video&key=${apiKey}`
     );
 
-    const liveStream = searchResponse.items?.[0]; // First result if live
+    const liveStream = searchResponse.items?.[0];
 
     return {
       id: channel.id,
@@ -243,11 +229,16 @@ export async function getChannelInfo(): Promise<ChannelInfo> {
       liveStreamTitle: liveStream?.snippet.title,
     };
   } catch (error) {
-    console.error("Error fetching channel info:", error);
-    if (error instanceof YouTubeAPIError) {
-      throw error; // Re-throw YouTubeAPIError with specific message
+    if (error instanceof Error) {
+      console.error("Error fetching channel info:", error.message);
+    } else {
+      console.error("Unknown error fetching channel info:", error);
     }
-    // Convert unknown errors to YouTubeAPIError with a friendly message
+
+    if (error instanceof YouTubeAPIError) {
+      throw error;
+    }
+
     throw new YouTubeAPIError(
       "Unable to load channel content. Please try again later."
     );
