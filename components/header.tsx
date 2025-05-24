@@ -83,63 +83,47 @@ export default function Header() {
         <div className="flex items-center gap-2 md:hidden">
           <ModeToggle />
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant={"ghost"} size={"icon"} aria-label="Menu">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[80vw] sm:w-[350px]" />
-            {/* Mobile menu content rendered conditionally when open */}
-            {isMobileMenuOpen && (
-              <div className="fixed inset-0 z-50 flex justify-end md:hidden">
-                <div className="w-[80vw] sm:w-[350px] bg-background h-full shadow-lg flex flex-col">
-                  <div className="flex items-center justify-between mb-6 p-4">
-                    <div className="flex items-center gap-2 font-serif font-bold text-xl">
-                      <ChevronRight className="h-6 w-6" />
-                      <span>{siteConfig.name}</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      aria-label="Close menu"
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <nav className="flex flex-col gap-4 px-4">
-                    {navItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="text-lg font-medium py-2 transition-colors hover:text-primary"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </nav>
-                  <div className="mt-auto pt-6 px-4 pb-4">
-                    <Button asChild>
-                      <a
-                        href={youtubeUrl ?? undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-red-600 hover:text-red-700 border-red-600/50 hover:border-red-700 px-4 py-2 border rounded text-sm"
-                      >
-                        Subscribe to YouTube
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-                {/* Overlay to close menu when clicking outside */}
-                <div
-                  className="fixed inset-0 bg-black/40"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  aria-hidden="true"
-                />
-              </div>
-            )}
-          </Sheet>
+  <SheetTrigger asChild>
+    <Button variant={"ghost"} size={"icon"} aria-label="Menu">
+      <Menu className="h-5 w-5" />
+    </Button>
+  </SheetTrigger>
+
+  <SheetContent side="right" className="w-[80vw] sm:w-[350px] flex flex-col">
+    <div className="flex items-center justify-between mb-6 p-4">
+      <div className="flex items-center gap-2 font-serif font-bold text-xl">
+        <ChevronRight className="h-6 w-6" />
+        <span>{siteConfig.name}</span>
+      </div>
+
+    </div>
+    <nav className="flex flex-col gap-4 px-4">
+      {navItems.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className="text-lg font-medium py-2 transition-colors hover:text-primary"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          {item.label}
+        </Link>
+      ))}
+    </nav>
+    <div className="mt-auto pt-6 px-4 pb-4">
+      <Button asChild>
+        <a
+          href={youtubeUrl ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-white border-red-600/50 bg-red-600 hover:border-red-700 px-4 py-2 border rounded text-sm"
+        >
+          Subscribe to YouTube
+        </a>
+      </Button>
+    </div>
+  </SheetContent>
+</Sheet>
+
         </div>
       </div>
     </header>
