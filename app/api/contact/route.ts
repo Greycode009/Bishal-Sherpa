@@ -5,17 +5,20 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Test the email connection on server start
-if (process.env.NODE_ENV === 'development') {
-  resend.emails.send({
-    from: 'Bishal Sherpa <onboarding@resend.dev>',
-    to: process.env.NEXT_PUBLIC_CONTACT_EMAIL!,
-    subject: 'Email Service Test',
-    html: '<p>Your email service is working!</p>'
-  }).then(() => {
-    console.log('✅ Email service test successful');
-  }).catch((error) => {
-    console.error('❌ Email service test failed:', error);
-  });
+if (process.env.NODE_ENV === "development") {
+  resend.emails
+    .send({
+      from: "Bishal Sherpa <onboarding@resend.dev>",
+      to: process.env.NEXT_PUBLIC_CONTACT_EMAIL!,
+      subject: "Email Service Test",
+      html: "<p>Your email service is working!</p>",
+    })
+    .then(() => {
+      console.log("✅ Email service test successful");
+    })
+    .catch((error) => {
+      console.error("❌ Email service test failed:", error);
+    });
 }
 
 export async function POST(req: Request) {
